@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Addis Closet Swap</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Telegram Web App SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div id="app-container">
+    <!-- Header -->
+    <header>
+      <div class="wordmark" id="app-logo">ADDIS CLOSET SWAP</div>
+      <div class="header-actions">
+        <button id="dev-admin-toggle" class="admin-badge-toggle">Simulate Admin</button>
+      </div>
+    </header>
+
+    <!-- Main Screens -->
+    <main>
+      
+      <!-- SCREEN 1: BROWSE FEED -->
+      <section id="screen-browse" class="screen active">
+        <div class="search-filter-wrapper">
+          <div class="search-container">
+            <i data-lucide="search" class="search-icon"></i>
+            <input type="text" id="search-input" class="search-input" placeholder="Search by item name or brand...">
+          </div>
+          <button id="filter-toggle" class="filter-toggle-btn">
+            <i data-lucide="sliders-horizontal"></i>
+            <span>Filters</span>
+          </button>
+          
+          <!-- Filter Drawer -->
+          <div id="filter-drawer" class="filter-drawer">
+            <div class="filter-group">
+              <label class="filter-label">Category</label>
+              <select id="filter-category" class="filter-select">
+                <option value="">All Categories</option>
+                <option value="Women">Women</option>
+                <option value="Men">Men</option>
+                <option value="Accessories">Accessories</option>
+                <option value="Shoes">Shoes</option>
+                <option value="Bags">Bags</option>
+              </select>
+            </div>
+            
+            <div class="filter-group">
+              <label class="filter-label">Size</label>
+              <input type="text" id="filter-size" class="form-input" placeholder="e.g. M, L, 43, 34">
+            </div>
+
+            <div class="filter-group">
+              <label class="filter-label">Location</label>
+              <select id="filter-location" class="filter-select">
+                <option value="">All Locations</option>
+                <option value="Bole">Bole</option>
+                <option value="CMC">CMC</option>
+                <option value="Gerji">Gerji</option>
+                <option value="Piassa">Piassa</option>
+                <option value="Mexico">Mexico</option>
+                <option value="Old Airport">Old Airport</option>
+                <option value="Summit">Summit</option>
+                <option value="Arat Kilo">Arat Kilo</option>
+                <option value="4 Kilo">4 Kilo</option>
+                <option value="Kazanchis">Kazanchis</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label class="filter-label">Condition</label>
+              <div class="pill-grid">
+                <input type="checkbox" id="cond-new" class="pill-checkbox" value="New">
+                <label for="cond-new" class="pill-label">New</label>
+
+                <input type="checkbox" id="cond-likenew" class="pill-checkbox" value="Like New">
+                <label for="cond-likenew" class="pill-label">Like New</label>
+
+                <input type="checkbox" id="cond-good" class="pill-checkbox" value="Good">
+                <label for="cond-good" class="pill-label">Good</label>
+
+                <input type="checkbox" id="cond-fair" class="pill-checkbox" value="Fair">
+                <label for="cond-fair" class="pill-label">Fair</label>
+              </div>
+            </div>
+
+            <div class="filter-group">
+              <label class="filter-label">Posted:</label>
+              <div id="filter-date-row" class="date-filter-row" style="overflow:auto; -webkit-overflow-scrolling:touch;">
+                <button class="date-pill" data-range="recent">Recent</button>
+                <button class="date-pill" data-range="today">Today</button>
+                <button class="date-pill" data-range="week">This Week</button>
+                <button class="date-pill" data-range="month">This Month</button>
+                <button class="date-pill" data-range="all">All Time</button>
+              </div>
+            </div>
+
+            <div class="filter-group slider-container">
+              <div class="slider-values">
+                <span class="filter-label">Max Price</span>
+                <span id="price-max-display">10,000 Birr</span>
+              </div>
+              <input type="range" id="filter-price-max" class="range-slider" min="0" max="10000" step="100" value="10000">
+            </div>
+
+            <div class="filter-buttons">
+              <button id="filter-reset-btn" class="btn btn-secondary" style="flex: 1;">Reset</button>
+              <button id="filter-apply-btn" class="btn btn-primary" style="flex: 2;">Apply Filters</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feed List -->
+        <div id="items-list" class="items-list">
+          <!-- Items injected here by JS -->
+        </div>
+
+        <div id="browse-empty" class="empty-state" style="display: none;">
+          <i data-lucide="package-search"></i>
+          <h3>No items match your filters</h3>
+          <p>Try resetting filters or expanding your search query.</p>
+        </div>
+      </section>
+
+      <!-- SCREEN 2: ITEM DETAIL -->
+      <section id="screen-detail" class="screen">
+        <div class="detail-content">
+          <!-- Image Carousel -->
+          <div class="carousel-wrapper">
+            <div class="carousel-slides" id="carousel-slides">
+              <!-- Slides injected here -->
+            </div>
+            <button class="carousel-btn carousel-btn-left" id="carousel-prev">
+              <i data-lucide="chevron-left"></i>
+            </button>
+            <button class="carousel-btn carousel-btn-right" id="carousel-next">
+              <i data-lucide="chevron-right"></i>
+            </button>
+            <div class="carousel-dots" id="carousel-dots">
+              <!-- Dots injected here -->
+            </div>
+          </div>
+
+          <!-- Item Header Details -->
+          <div class="detail-info-container">
+            <div class="detail-item-id" id="detail-item-id">ITEM ID: CS-1000</div>
+            <div class="detail-header">
+              <h1 class="detail-title" id="detail-name">Item Name</h1>
+              <div class="detail-price" id="detail-price">0 Birr</div>
+            </div>
+
+            <!-- Details Grid -->
+            <div class="detail-grid">
+              <div class="detail-grid-item">
+                <span class="detail-grid-label">Category</span>
+                <span class="detail-grid-value" id="detail-category">-</span>
+              </div>
+              <div class="detail-grid-item">
+                <span class="detail-grid-label">Brand</span>
+                <span class="detail-grid-value" id="detail-brand">-</span>
+              </div>
+              <div class="detail-grid-item">
+                <span class="detail-grid-label">Size</span>
+                <span class="detail-grid-value" id="detail-size">-</span>
+              </div>
+              <div class="detail-grid-item">
+                <span class="detail-grid-label">Condition</span>
+                <span class="detail-grid-value" id="detail-condition">-</span>
+              </div>
+              <div class="detail-grid-item">
+                <span class="detail-grid-label">Location</span>
+                <span class="detail-grid-value" id="detail-location">-</span>
+              </div>
+              <div class="detail-grid-item">
+                <span class="detail-grid-label">Listed Date</span>
+                <span class="detail-grid-value" id="detail-date">-</span>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div class="detail-section">
+              <span class="detail-section-title">Description</span>
+              <p id="detail-description">No description provided.</p>
+            </div>
+
+            <!-- Flaws -->
+            <div class="detail-section">
+              <span class="detail-section-title">Flaws</span>
+              <div id="detail-flaws-alert" class="flaws-alert">
+                <span id="detail-flaws">None</span>
+              </div>
+            </div>
+
+            <!-- Reason for Selling -->
+            <div class="detail-section" id="detail-reason-section" style="display: none;">
+              <span class="detail-section-title">Reason for Selling</span>
+              <p id="detail-reason">Not specified.</p>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid var(--border); margin: 10px 0;">
+
+            <!-- Seller Card -->
+            <div class="seller-card">
+              <div class="seller-profile-header">
+                <div class="seller-profile-info">
+                  <div class="seller-profile-name" id="detail-seller-name">-</div>
+                  <div class="seller-profile-meta">
+                    <span id="detail-seller-exchanges">0</span> exchanges
+                  </div>
+                </div>
+                <span class="badge" id="detail-seller-status-badge">-</span>
+              </div>
+              
+              <button id="contact-seller-btn" class="btn btn-primary">
+                Contact Seller
+              </button>
+            </div>
+          </div>
+
+          <!-- Similar Items -->
+          <div class="similar-items-section">
+            <span class="detail-section-title">Similar Items</span>
+            <div class="similar-items-grid" id="similar-items-grid">
+              <!-- Similar items injected here -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 3: SELLER APPLICATION -->
+      <section id="screen-apply-seller" class="screen">
+        <div class="form-screen-container">
+          <div class="form-header">
+            <h2 class="form-title">Seller Application</h2>
+            <p>To begin listing your items on Addis Closet Swap, please verify your profile details. Our admins review all applications to maintain quality.</p>
+          </div>
+
+          <form id="seller-application-form" class="form-screen-container" style="padding: 0;" onsubmit="return false;">
+            <div class="form-group">
+              <label class="form-label" for="apply-name">Full Name</label>
+              <input type="text" id="apply-name" class="form-input" required placeholder="Enter your full name">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="apply-phone">Phone Number</label>
+              <input type="tel" id="apply-phone" class="form-input" required placeholder="e.g. +251911223344">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="apply-location">Default Location</label>
+              <select id="apply-location" class="form-select" required>
+                <option value="" disabled selected>Select location</option>
+                <option value="Bole">Bole</option>
+                <option value="CMC">CMC</option>
+                <option value="Gerji">Gerji</option>
+                <option value="Piassa">Piassa</option>
+                <option value="Mexico">Mexico</option>
+                <option value="Old Airport">Old Airport</option>
+                <option value="Summit">Summit</option>
+                <option value="Arat Kilo">Arat Kilo</option>
+                <option value="4 Kilo">4 Kilo</option>
+                <option value="Kazanchis">Kazanchis</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="apply-initial-count">How many items do you want to list initially?</label>
+              <input type="number" id="apply-initial-count" class="form-input" required min="1" max="100" placeholder="e.g. 5">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Have you sold online before?</label>
+              <div class="radio-group-toggle">
+                <input type="radio" name="apply-experience" id="exp-yes" class="radio-option" value="Yes">
+                <label for="exp-yes" class="radio-label">Yes</label>
+                
+                <input type="radio" name="apply-experience" id="exp-no" class="radio-option" value="No" checked>
+                <label for="exp-no" class="radio-label">No</label>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 10px;">
+              <label class="form-checkbox-label">
+                <input type="checkbox" id="apply-agreement" required>
+                <span>I confirm all items are from my personal wardrobe and accurately described. No boutique/imported commercial stocks.</span>
+              </label>
+            </div>
+
+            <button type="submit" id="submit-application-btn" class="btn btn-primary" style="margin-top: 10px;">
+              Submit Application
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- SCREEN 4: SELLER DASHBOARD -->
+      <section id="screen-seller-dashboard" class="screen">
+        <div class="dashboard-header">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h2 class="form-title" id="dash-seller-name">Seller Dashboard</h2>
+              <p id="dash-seller-status">Status: Active</p>
+            </div>
+            <button id="dash-list-new-btn" class="btn btn-primary">
+              <i data-lucide="plus" style="width: 16px; height: 16px; display: inline-block; vertical-align: middle; margin-right: 4px;"></i>
+              <span>List Item</span>
+            </button>
+          </div>
+
+          <!-- Stats -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span class="stat-value" id="stat-listed">0</span>
+              <span class="stat-label">Listed</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value" id="stat-sold">0</span>
+              <span class="stat-label">Sold</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value" id="stat-exchanges">0</span>
+              <span class="stat-label">Exchanges</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value" id="stat-rating">0.0</span>
+              <span class="stat-label">Rating</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-20">
+          <h3 class="mb-12" style="font-size: 15px; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.05em;">My Listings</h3>
+          <div id="seller-listings-list" class="items-list" style="padding: 0;">
+            <!-- Seller items injected here -->
+          </div>
+          <div id="seller-listings-empty" class="empty-state" style="display: none; padding: 24px 0;">
+            <i data-lucide="layers"></i>
+            <h3>No items listed yet</h3>
+            <p>Tap "List Item" above to add your first fashion listing.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 5: ADD LISTING -->
+      <section id="screen-add-listing" class="screen">
+        <div class="form-screen-container">
+          <div class="form-header">
+            <h2 class="form-title">List New Item</h2>
+            <p>Upload quality photos and details about the clothing item or accessory you wish to swap/sell.</p>
+          </div>
+
+          <form id="add-listing-form" class="form-screen-container" style="padding: 0;" onsubmit="return false;">
+            <!-- Photos -->
+            <div class="form-group photo-uploader">
+              <label class="form-label">Photos (Max 5, first is primary)</label>
+              <div class="photo-uploader-grid">
+                <div class="photo-uploader-card" id="upload-card-0" onclick="document.getElementById('file-input-0').click()">
+                  <i data-lucide="camera"></i>
+                  <input type="file" id="file-input-0" accept="image/*" style="display: none;" onchange="handleFileSelect(event, 0)">
+                </div>
+                <div class="photo-uploader-card" id="upload-card-1" onclick="document.getElementById('file-input-1').click()" style="display: none;">
+                  <i data-lucide="camera"></i>
+                  <input type="file" id="file-input-1" accept="image/*" style="display: none;" onchange="handleFileSelect(event, 1)">
+                </div>
+                <div class="photo-uploader-card" id="upload-card-2" onclick="document.getElementById('file-input-2').click()" style="display: none;">
+                  <i data-lucide="camera"></i>
+                  <input type="file" id="file-input-2" accept="image/*" style="display: none;" onchange="handleFileSelect(event, 2)">
+                </div>
+                <div class="photo-uploader-card" id="upload-card-3" onclick="document.getElementById('file-input-3').click()" style="display: none;">
+                  <i data-lucide="camera"></i>
+                  <input type="file" id="file-input-3" accept="image/*" style="display: none;" onchange="handleFileSelect(event, 3)">
+                </div>
+                <div class="photo-uploader-card" id="upload-card-4" onclick="document.getElementById('file-input-4').click()" style="display: none;">
+                  <i data-lucide="camera"></i>
+                  <input type="file" id="file-input-4" accept="image/*" style="display: none;" onchange="handleFileSelect(event, 4)">
+                </div>
+              </div>
+            </div>
+
+            <!-- Item Name -->
+            <div class="form-group">
+              <label class="form-label" for="add-name">Item Name</label>
+              <input type="text" id="add-name" class="form-input" required placeholder="e.g. Zara Denim Jacket">
+            </div>
+
+            <!-- Category -->
+            <div class="form-group">
+              <label class="form-label" for="add-category">Category</label>
+              <select id="add-category" class="form-select" required>
+                <option value="" disabled selected>Select category</option>
+                <option value="Women">Women</option>
+                <option value="Men">Men</option>
+                <option value="Accessories">Accessories</option>
+                <option value="Shoes">Shoes</option>
+                <option value="Bags">Bags</option>
+              </select>
+            </div>
+
+            <!-- Subcategory -->
+            <div class="form-group">
+              <label class="form-label" for="add-subcategory">Subcategory</label>
+              <input type="text" id="add-subcategory" class="form-input" required placeholder="e.g. Dresses, Outerwear, Sneakers">
+            </div>
+
+            <!-- Brand -->
+            <div class="form-group">
+              <label class="form-label" for="add-brand">Brand</label>
+              <input type="text" id="add-brand" class="form-input" required placeholder="e.g. Zara, H&M, Nike, Custom">
+            </div>
+
+            <!-- Size -->
+            <div class="form-group">
+              <label class="form-label" for="add-size">Size</label>
+              <input type="text" id="add-size" class="form-input" required placeholder="e.g. M, L, 42, 34">
+            </div>
+
+            <!-- Condition -->
+            <div class="form-group">
+              <label class="form-label">Condition</label>
+              <div class="radio-group-horizontal">
+                <input type="radio" name="add-condition" id="cond-select-new" class="radio-option" value="New">
+                <label for="cond-select-new" class="radio-label">New</label>
+                
+                <input type="radio" name="add-condition" id="cond-select-likenew" class="radio-option" value="Like New" checked>
+                <label for="cond-select-likenew" class="radio-label">Like New</label>
+
+                <input type="radio" name="add-condition" id="cond-select-good" class="radio-option" value="Good">
+                <label for="cond-select-good" class="radio-label">Good</label>
+
+                <input type="radio" name="add-condition" id="cond-select-fair" class="radio-option" value="Fair">
+                <label for="cond-select-fair" class="radio-label">Fair</label>
+              </div>
+            </div>
+
+            <!-- Price -->
+            <div class="form-group">
+              <label class="form-label" for="add-price">Price</label>
+              <div class="price-input-wrapper">
+                <input type="number" id="add-price" class="form-input" required min="0" placeholder="e.g. 1500">
+                <span class="price-input-suffix">Birr</span>
+              </div>
+            </div>
+
+            <!-- Location -->
+            <div class="form-group">
+              <label class="form-label" for="add-location">Location</label>
+              <select id="add-location" class="form-select" required>
+                <option value="" disabled selected>Select location</option>
+                <option value="Bole">Bole</option>
+                <option value="CMC">CMC</option>
+                <option value="Gerji">Gerji</option>
+                <option value="Piassa">Piassa</option>
+                <option value="Mexico">Mexico</option>
+                <option value="Old Airport">Old Airport</option>
+                <option value="Summit">Summit</option>
+                <option value="Arat Kilo">Arat Kilo</option>
+                <option value="4 Kilo">4 Kilo</option>
+                <option value="Kazanchis">Kazanchis</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+              <label class="form-label" for="add-description">Description</label>
+              <textarea id="add-description" class="form-textarea" rows="3" required placeholder="Describe material, fit, and general details..."></textarea>
+            </div>
+
+            <!-- Flaws -->
+            <div class="form-group">
+              <label class="form-label" for="add-flaws">Flaws</label>
+              <input type="text" id="add-flaws" class="form-input" placeholder="e.g. Small stain on sleeve, none" value="None">
+            </div>
+
+            <!-- Reason for Selling -->
+            <div class="form-group">
+              <label class="form-label" for="add-reason">Reason for Selling (Optional)</label>
+              <input type="text" id="add-reason" class="form-input" placeholder="e.g. Doesn't fit anymore">
+            </div>
+
+            <button type="submit" id="submit-listing-btn" class="btn btn-primary" style="margin-top: 10px;">
+              Submit for Approval
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- SCREEN 6: ADMIN PANEL -->
+      <section id="screen-admin" class="screen">
+        <!-- Admin Navigation Tabs -->
+        <div class="admin-tabs">
+          <button class="admin-tab active" onclick="switchAdminTab('pending-items')">Pending Items</button>
+          <button class="admin-tab" onclick="switchAdminTab('pending-sellers')">Pending Sellers</button>
+          <button class="admin-tab" onclick="switchAdminTab('all-items')">All Items</button>
+          <button class="admin-tab" onclick="switchAdminTab('all-sellers')">Sellers</button>
+          <button class="admin-tab" onclick="switchAdminTab('stats')">Stats</button>
+        </div>
+
+        <div class="admin-content">
+          <!-- Pending Items Tab -->
+          <div id="admin-pending-items" class="admin-tab-content">
+            <h3 class="mb-12">Pending Listings</h3>
+            <div class="admin-table-container">
+              <table class="admin-table" id="admin-pending-items-table">
+                <thead>
+                  <tr>
+                    <th>Item ID</th>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Seller</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Pending items rows -->
+                </tbody>
+              </table>
+            </div>
+            <div id="admin-pending-items-empty" class="empty-state" style="padding: 24px 0;">
+              <i data-lucide="check-circle-2"></i>
+              <h3>No pending listings</h3>
+              <p>All items have been approved or rejected.</p>
+            </div>
+            
+            <!-- Dynamic Item Preview Card for admin -->
+            <div id="admin-item-preview-box" style="display: none; margin-top: 16px;">
+              <h4>Item Preview: <span id="admin-preview-title">-</span></h4>
+              <div class="admin-preview-card">
+                <div class="admin-preview-img-row" id="admin-preview-images">
+                  <!-- Images will load here -->
+                </div>
+                <p><strong>Category/Size:</strong> <span id="admin-preview-meta">-</span></p>
+                <p><strong>Desc:</strong> <span id="admin-preview-desc">-</span></p>
+                <p><strong>Flaws:</strong> <span id="admin-preview-flaws">-</span></p>
+                <div class="admin-action-btns" style="margin-top: 10px;">
+                  <button id="admin-preview-approve" class="btn btn-primary" style="flex: 1; padding: 6px 12px; font-size: 12px;">Approve Listing</button>
+                  <button id="admin-preview-reject" class="btn btn-danger" style="flex: 1; padding: 6px 12px; font-size: 12px;">Reject Listing</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pending Sellers Tab -->
+          <div id="admin-pending-sellers" class="admin-tab-content" style="display: none;">
+            <h3 class="mb-12">Pending Applications</h3>
+            <div class="admin-table-container">
+              <table class="admin-table" id="admin-pending-sellers-table">
+                <thead>
+                  <tr>
+                    <th>Username</th>
+                    <th>Full Name</th>
+                    <th>Phone</th>
+                    <th>Location</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Pending seller rows -->
+                </tbody>
+              </table>
+            </div>
+            <div id="admin-pending-sellers-empty" class="empty-state" style="padding: 24px 0;">
+              <i data-lucide="users-2"></i>
+              <h3>No pending applications</h3>
+              <p>All applications have been processed.</p>
+            </div>
+          </div>
+
+          <!-- All Items Directory Tab -->
+          <div id="admin-all-items" class="admin-tab-content" style="display: none;">
+            <div style="display: flex; gap: 8px; align-items: center;" class="mb-12">
+              <input type="text" id="admin-search-items" class="form-input" placeholder="Search Items..." style="flex: 2; padding: 8px 12px; font-size: 13px;">
+              <select id="admin-filter-status" class="form-select" style="flex: 1; padding: 8px 12px; font-size: 13px;">
+                <option value="">All Status</option>
+                <option value="Active">Active</option>
+                <option value="Sold">Sold</option>
+                <option value="Pending Approval">Pending</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+            </div>
+            <div class="admin-table-container">
+              <table class="admin-table" id="admin-all-items-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- All items rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- All Sellers Tab -->
+          <div id="admin-all-sellers" class="admin-tab-content" style="display: none;">
+            <h3 class="mb-12">Sellers Directory</h3>
+            <div class="admin-table-container">
+              <table class="admin-table" id="admin-all-sellers-table">
+                <thead>
+                  <tr>
+                    <th>TG User</th>
+                    <th>Name</th>
+                    <th>Exchanges</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Sellers list -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Platform Stats Tab -->
+          <div id="admin-stats" class="admin-tab-content" style="display: none;">
+            <h3 class="mb-12">Platform Performance</h3>
+            <div class="admin-stats-summary">
+              <div class="admin-stat-box">
+                <span class="admin-stat-num" id="admin-stat-total-items">0</span>
+                <span class="admin-stat-name">Total Items</span>
+              </div>
+              <div class="admin-stat-box">
+                <span class="admin-stat-num" id="admin-stat-sold-items">0</span>
+                <span class="admin-stat-name">Sold Items</span>
+              </div>
+              <div class="admin-stat-box">
+                <span class="admin-stat-num" id="admin-stat-active-sellers">0</span>
+                <span class="admin-stat-name">Active Sellers</span>
+              </div>
+              <div class="admin-stat-box">
+                <span class="admin-stat-num" id="admin-stat-pending-approval">0</span>
+                <span class="admin-stat-name">Pending Items</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 7: MY ACCOUNT -->
+      <section id="screen-account" class="screen">
+        <div class="form-screen-container">
+          <div class="form-header text-center" style="align-items: center; gap: 8px;">
+            <div style="width: 64px; height: 64px; border-radius: 50%; background-color: var(--accent); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700;" id="user-avatar-placeholder">
+              U
+            </div>
+            <h2 class="form-title" id="account-user-name">User Name</h2>
+            <p id="account-user-handle">@username</p>
+          </div>
+
+          <!-- Profile Info Cards -->
+          <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
+            <div class="seller-card" style="padding: 12px 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 13px; font-weight: 600; text-transform: uppercase; color: var(--text-secondary);">Seller Onboarding</span>
+                <span class="badge" id="account-seller-status">-</span>
+              </div>
+              <div style="margin-top: 8px;" id="account-onboarding-action">
+                <!-- Action button to apply or dashboard depending on status -->
+              </div>
+            </div>
+
+            <!-- Platform Settings -->
+            <div class="seller-card" style="padding: 12px 16px; gap: 12px;">
+              <h3 style="font-size: 13px; font-weight: 600; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 4px;">Settings & Dev</h3>
+              
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 13px; color: var(--text-primary);">Theme Scheme</span>
+                <span style="font-size: 13px; font-weight: 600; text-transform: uppercase;" id="theme-scheme-display">Light Mode</span>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 12px;">
+                <span style="font-size: 13px; color: var(--text-primary);">Firebase Status</span>
+                <span style="font-size: 13px; font-weight: 600;" id="firebase-status-display">Checking...</span>
+              </div>
+
+              <div id="admin-panel-link-container" style="display: none; border-top: 1px solid var(--border); padding-top: 12px;">
+                <button id="admin-go-btn" class="btn btn-secondary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                  <i data-lucide="shield-check" style="width: 18px; height: 18px;"></i>
+                  Open Admin Dashboard
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav id="bottom-nav">
+      <button class="nav-tab active" onclick="navigateTo('screen-browse')">
+        <i data-lucide="tag"></i>
+        <span>Browse</span>
+      </button>
+      <button class="nav-tab" onclick="navigateTo('screen-seller-dashboard')">
+        <i data-lucide="shirt"></i>
+        <span>Sell</span>
+      </button>
+      <button class="nav-tab" onclick="navigateTo('screen-account')">
+        <i data-lucide="user"></i>
+        <span>Account</span>
+      </button>
+    </nav>
+    
+    <!-- Toast Banner -->
+    <div id="toast">Item added successfully</div>
+  </div>
+
+  <!-- Firebase configuration and App bootstrap scripts -->
+  <script src="firebase-config.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
