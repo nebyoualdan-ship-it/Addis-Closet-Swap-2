@@ -997,7 +997,7 @@ async function renderAccountScreen() {
 
   // Developer Admin Dashboard access button
   const adminContainer = document.getElementById("admin-panel-link-container");
-  if (AppState.isAdminMode && isCurrentUserAdmin()) {
+  if (isCurrentUserAdmin()) {
     adminContainer.style.display = "block";
   } else {
     adminContainer.style.display = "none";
