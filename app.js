@@ -36,8 +36,13 @@ const ADMIN_TELEGRAM_IDS = [373508044];
 const ADMIN_USERNAMES = [];
 
 function isCurrentUserAdmin() {
-  if (!AppState || !AppState.currentUser) return false;
-  return ADMIN_TELEGRAM_IDS.includes(Number(AppState.currentUser.id)) || ADMIN_USERNAMES.includes(AppState.currentUser.username);
+  if (!AppState || !AppState.currentUser) {
+    console.log("isCurrentUserAdmin: AppState or currentUser missing");
+    return false;
+  }
+  const result = ADMIN_TELEGRAM_IDS.includes(Number(AppState.currentUser.id)) || ADMIN_USERNAMES.includes(AppState.currentUser.username);
+  console.log("isCurrentUserAdmin: id=" + AppState.currentUser.id + ", ADMIN_IDS=" + JSON.stringify(ADMIN_TELEGRAM_IDS) + ", result=" + result);
+  return result;
 }
 
 function updateAdminControlVisibility() {
@@ -83,7 +88,8 @@ const AppState = {
     size: '',
     location: '',
     conditions: [],
-    priceMax: 10000,
+    priceMin: 0,
+    priceMax: 1000000,
     dateRange: 'recent'
   },
   photosToUpload: [] // Temporary storage for photos to be uploaded
@@ -261,18 +267,18 @@ const DB = {
 
   async getSellerById(telegramId) {
     if (isFirebaseConfigured) {
-      const docRef = doc(firestoreDb, "sellers", telegramId);
+      const docRef = doc(firestoreDb, "sellers", String(telegramId));
       const snap = await getDoc(docRef);
       return snap.exists() ? snap.data() : null;
     } else {
       const sellers = await this.getAllSellers();
-      return sellers.find(s => s.telegramId === telegramId) || null;
+      return sellers.find(s => s.telegramId === String(telegramId)) || null;
     }
   },
 
   async saveSeller(seller) {
     if (isFirebaseConfigured) {
-      await setDoc(doc(firestoreDb, "sellers", seller.telegramId), seller);
+      await setDoc(doc(firestoreDb, "sellers", String(seller.telegramId)), seller);
     } else {
       const sellers = await this.getAllSellers();
       const idx = sellers.findIndex(s => s.telegramId === seller.telegramId);
@@ -633,7 +639,9 @@ function renderBrowseFeed() {
     filtered = filtered.filter(item => AppState.filters.conditions.includes(item.condition));
   }
   if (AppState.filters.priceMax) {
-    filtered = filtered.filter(item => item.price <= AppState.filters.priceMax);
+    const min = AppState.filters.priceMin || 0;
+    const max = AppState.filters.priceMax != null ? AppState.filters.priceMax : Infinity;
+    filtered = filtered.filter(item => item.price >= min && item.price <= max);
   }
   if (AppState.filters.dateRange && AppState.filters.dateRange !== 'all') {
     const now = Date.now();
@@ -732,7 +740,8 @@ function renderItemDetail(item) {
 
   // Seller Card
   document.getElementById("detail-seller-name").textContent = item.sellerName;
-  document.getElementById("detail-seller-exchanges").textContent = item.sellerExchanges || 0;
+  const detailExEl = document.getElementById("detail-seller-exchanges");
+  if (detailExEl) detailExEl.textContent = item.sellerExchanges || 0; // guard in case element was removed from UI
   
   // Seller status badge class
   const sellerBadge = document.getElementById("detail-seller-status-badge");
@@ -882,7 +891,8 @@ function renderSellerDashboard(seller) {
   
   document.getElementById("stat-listed").textContent = sellerItems.length;
   document.getElementById("stat-sold").textContent = soldCount;
-  document.getElementById("stat-exchanges").textContent = seller.exchangesCount || 0;
+  const statExEl = document.getElementById("stat-exchanges");
+  if (statExEl) statExEl.textContent = seller.exchangesCount || 0; // guard - element removed in UI
   document.getElementById("stat-rating").textContent = (seller.rating || 0).toFixed(1);
 
   // Render listing items
@@ -971,7 +981,13 @@ async function renderAccountScreen() {
   document.getElementById("account-user-handle").textContent = AppState.currentUser.username ? `@${AppState.currentUser.username}` : "No username set";
 
   // Check seller status
-  const seller = await DB.getSellerById(AppState.currentUser.id);
+  let seller = null;
+  try {
+    seller = await DB.getSellerById(AppState.currentUser.id);
+  } catch (err) {
+    console.error("Error fetching seller:", err);
+  }
+  
   const statusBadge = document.getElementById("account-seller-status");
   const actionContainer = document.getElementById("account-onboarding-action");
 
@@ -997,11 +1013,17 @@ async function renderAccountScreen() {
 
   // Developer Admin Dashboard access button
   const adminContainer = document.getElementById("admin-panel-link-container");
-  if (isCurrentUserAdmin()) {
+  const isAdmin = isCurrentUserAdmin();
+  const showAdmin = isAdmin || AppState.isAdminMode;
+  console.log("renderAccountScreen: isAdmin=" + isAdmin + ", isAdminMode=" + AppState.isAdminMode + ", showAdmin=" + showAdmin);
+  if (showAdmin) {
     adminContainer.style.display = "block";
   } else {
     adminContainer.style.display = "none";
   }
+  
+  // Also call updateAdminControlVisibility to ensure the toggle button is shown
+  updateAdminControlVisibility();
 }
 
 // --- 6. PHOTO ATTACHMENT FLOW ---
@@ -1364,12 +1386,42 @@ function bindFormListeners() {
     priceDisplay.textContent = `${Number(e.target.value).toLocaleString()} Birr`;
   });
 
+  // Advanced price filter controls
+  const advToggle = document.getElementById('filter-advanced-toggle');
+  const advControls = document.getElementById('advanced-price-controls');
+  const advMin = document.getElementById('filter-price-min');
+  const advMaxInput = document.getElementById('filter-price-max-input');
+  const priceMinDisplay = document.getElementById('price-min-display');
+
+  if (advToggle) {
+    advToggle.addEventListener('change', (e) => {
+      if (advControls) advControls.style.display = e.target.checked ? 'flex' : 'none';
+    });
+  }
+
+  // Keep slider and display in sync with defaults
+  priceDisplay.textContent = `${Number(priceSlider.value).toLocaleString()} Birr`;
+  if (priceMinDisplay) priceMinDisplay.textContent = `0 Birr`;
+
   // Apply filters button
   document.getElementById("filter-apply-btn").addEventListener("click", () => {
     AppState.filters.category = document.getElementById("filter-category").value;
     AppState.filters.size = document.getElementById("filter-size").value;
     AppState.filters.location = document.getElementById("filter-location").value;
-    AppState.filters.priceMax = Number(priceSlider.value);
+    // Apply advanced price inputs if enabled and valid, otherwise use the slider
+    if (advToggle && advToggle.checked) {
+      const minVal = Number(advMin.value) || 0;
+      const maxVal = Number(advMaxInput.value) || 0;
+      if (minVal > 0 && maxVal > 0 && minVal > maxVal) {
+        showToast('Price: Min should be <= Max');
+        return;
+      }
+      AppState.filters.priceMin = minVal || 0;
+      AppState.filters.priceMax = maxVal || Number(priceSlider.value);
+    } else {
+      AppState.filters.priceMin = 0;
+      AppState.filters.priceMax = Number(priceSlider.value);
+    }
     
     // Condition check box pills
     const activeConds = [];
@@ -1409,11 +1461,16 @@ function bindFormListeners() {
 
   // Reset Filters Button
   document.getElementById("filter-reset-btn").addEventListener("click", () => {
+    document.getElementById("search-input").value = "";
     document.getElementById("filter-category").value = "";
     document.getElementById("filter-size").value = "";
     document.getElementById("filter-location").value = "";
-    priceSlider.value = 10000;
-    priceDisplay.textContent = "10,000 Birr";
+    priceSlider.value = 1000000;
+    priceDisplay.textContent = "1,000,000 Birr";
+    if (document.getElementById('filter-price-min')) document.getElementById('filter-price-min').value = '';
+    if (document.getElementById('filter-price-max-input')) document.getElementById('filter-price-max-input').value = '';
+    if (document.getElementById('filter-advanced-toggle')) document.getElementById('filter-advanced-toggle').checked = false;
+    if (document.getElementById('advanced-price-controls')) document.getElementById('advanced-price-controls').style.display = 'none';
     
     document.getElementById("cond-new").checked = false;
     document.getElementById("cond-likenew").checked = false;
@@ -1425,7 +1482,8 @@ function bindFormListeners() {
       size: '',
       location: '',
       conditions: [],
-      priceMax: 10000,
+      priceMin: 0,
+      priceMax: 1000000,
       dateRange: 'recent'
     };
     // refresh date pills UI
@@ -1621,14 +1679,14 @@ async function bootstrap() {
   // Capture user info
   let user = Telegram.WebApp.initDataUnsafe.user;
   if (!user || !user.id) {
-    // Development mockup user outside TG
+    // Development mockup user outside TG - set to admin ID for testing
     user = {
-      id: "dev_tester_123",
+      id: 373508044,
       username: "addis_tester",
       first_name: "Abebe",
       last_name: "Bikila"
     };
-    console.log("No Telegram WebApp user detected, initialized dev tester.");
+    console.log("No Telegram WebApp user detected, initialized dev tester with admin privileges.");
   }
   AppState.currentUser = user;
 
