@@ -13,7 +13,6 @@ const isFirebaseConfigured = window.firebaseConfig &&
   window.firebaseConfig.projectId !== "YOUR_PROJECT_ID_HERE";
 
 // Telegram posting configuration
-// Telegram posting configuration
 // IMPORTANT SECURITY NOTE: Do NOT ship your bot token in client-side code for production.
 // Host a Cloud Function or secure server endpoint that holds the bot token and performs
 // Telegram Bot API calls. This client-side app should only call that secure endpoint.
@@ -30,6 +29,27 @@ const TELEGRAM_CHANNEL_ID = "-100xxxxxxxxxx"; // e.g. -1001234567890
 // Secure endpoint that performs the actual Bot API requests using the secret bot token.
 // Deploy a Cloud Function at this URL that accepts a POST with item data and posts to Telegram.
 const TELEGRAM_POST_ENDPOINT = "https://us-central1-YOUR_PROJECT.cloudfunctions.net/postTelegramItem"; // Replace with your secure endpoint
+
+// Admin user configuration: only these Telegram users should see admin controls.
+// Replace with your real admin Telegram ID. Only this user may access admin controls.
+const ADMIN_TELEGRAM_IDS = [373508044];
+const ADMIN_USERNAMES = [];
+
+function isCurrentUserAdmin() {
+  if (!AppState || !AppState.currentUser) return false;
+  return ADMIN_TELEGRAM_IDS.includes(Number(AppState.currentUser.id)) || ADMIN_USERNAMES.includes(AppState.currentUser.username);
+}
+
+function updateAdminControlVisibility() {
+  const devToggle = document.getElementById("dev-admin-toggle");
+  if (!devToggle) return;
+  if (isCurrentUserAdmin()) {
+    devToggle.style.display = 'inline-flex';
+  } else {
+    devToggle.style.display = 'none';
+    AppState.isAdminMode = false;
+  }
+}
 
 let firebaseApp = null;
 let firestoreDb = null;
@@ -51,8 +71,8 @@ const AppState = {
     size: '',
     location: '',
     conditions: [],
-    priceMax: 10000
-    ,dateRange: 'recent'
+    priceMax: 10000,
+    dateRange: 'recent'
   },
   photosToUpload: [] // Temporary storage for photos to be uploaded
 };
@@ -447,6 +467,12 @@ function formatDate(timestamp) {
 // --- 4. ROUTING SYSTEM & NAVIGATION ---
 function navigateTo(screenId, direction = 'forward') {
   const prevScreen = AppState.activeScreen;
+
+  if (screenId === 'screen-admin' && !isCurrentUserAdmin()) {
+    showToast('Admin access is restricted.');
+    navigateTo('screen-browse');
+    return;
+  }
   
   // Hide current active screen
   const currentElem = document.getElementById(prevScreen);
@@ -950,7 +976,7 @@ async function renderAccountScreen() {
 
   // Developer Admin Dashboard access button
   const adminContainer = document.getElementById("admin-panel-link-container");
-  if (AppState.isAdminMode) {
+  if (AppState.isAdminMode && isCurrentUserAdmin()) {
     adminContainer.style.display = "block";
   } else {
     adminContainer.style.display = "none";
@@ -1409,8 +1435,6 @@ function bindFormListeners() {
     const fullName = document.getElementById("apply-name").value.trim();
     const phone = document.getElementById("apply-phone").value.trim();
     const location = document.getElementById("apply-location").value;
-    const initialCount = Number(document.getElementById("apply-initial-count").value);
-    const expYes = document.getElementById("exp-yes").checked;
     
     if (!fullName || !phone || !location) {
       showToast("Please fill in all required fields.");
@@ -1424,7 +1448,7 @@ function bindFormListeners() {
       fullName,
       phone,
       location,
-      status: "Pending",
+      status: "Active",
       exchangesCount: 0,
       rating: 5.0,
       joinedDate: Date.now(),
@@ -1432,11 +1456,11 @@ function bindFormListeners() {
     };
 
     await DB.saveSeller(sellerObj);
-    showToast("Application submitted for admin review.");
+    AppState.currentSeller = sellerObj;
+    showToast("Seller account activated. You can now list items.");
     btn.disabled = false;
     
-    // Redirect home / account
-    navigateTo('screen-account');
+    navigateTo('screen-seller-dashboard');
   });
 
   // Add Listing Form Submit Handler
@@ -1528,7 +1552,10 @@ function bindFormListeners() {
 
   // Simulate Admin Badge toggle in Header
   const devToggle = document.getElementById("dev-admin-toggle");
+  updateAdminControlVisibility();
+
   devToggle.addEventListener("click", () => {
+    if (!isCurrentUserAdmin()) return;
     AppState.isAdminMode = !AppState.isAdminMode;
     devToggle.classList.toggle("active", AppState.isAdminMode);
     
@@ -1546,7 +1573,6 @@ function bindFormListeners() {
       renderAccountScreen();
     }
   });
-
   // Account Screen: Go to admin page
   document.getElementById("admin-go-btn").addEventListener("click", () => {
     navigateTo('screen-admin');

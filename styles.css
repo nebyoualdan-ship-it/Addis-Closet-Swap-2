@@ -131,6 +131,7 @@ header {
 }
 
 .admin-badge-toggle {
+  display: none;
   font-size: 10px;
   font-weight: 600;
   padding: 4px 8px;
@@ -458,6 +459,35 @@ p {
   color: var(--text-primary);
   outline: none;
   transition: var(--transition);
+}
+
+body.dark .filter-label,
+body.dark .filter-select,
+body.dark .form-input,
+body.dark .form-select,
+body.dark .form-textarea,
+body.dark .date-pill,
+body.dark .pill-label,
+body.dark .filter-toggle-btn {
+  color: var(--text-primary);
+}
+
+body.dark .filter-select,
+body.dark .form-input,
+body.dark .form-select,
+body.dark .form-textarea {
+  background-color: var(--input-bg);
+  border-color: var(--border);
+}
+
+body.dark .date-pill {
+  background: #1C1C1E;
+  border-color: #2C2C2E;
+}
+
+body.dark .filter-toggle-btn {
+  background-color: rgba(255,255,255,0.06);
+  border-color: #2C2C2E;
 }
 
 .filter-select:focus, .form-input:focus, .form-select:focus, .form-textarea:focus {
