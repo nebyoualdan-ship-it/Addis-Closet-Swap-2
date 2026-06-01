@@ -240,22 +240,22 @@ p {
 
 /* Item cards in listing */
 .items-list {
-  padding: 16px;
+  padding: 12px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 12px;
 }
 
 @media (max-width: 520px) {
   .items-list {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 .item-card {
   background-color: var(--card-bg);
   border: none;
-  border-radius: 22px;
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -271,16 +271,16 @@ p {
 
 .item-card-image {
   width: 100%;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
   background-color: var(--border);
 }
 
 .item-card-details {
-  padding: 16px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .item-card-header {
@@ -290,7 +290,7 @@ p {
 }
 
 .item-card-name {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text-primary);
   white-space: nowrap;
@@ -299,13 +299,13 @@ p {
 }
 
 .item-card-price {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 800;
   color: var(--text-primary);
 }
 
 .item-card-meta {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-secondary);
   letter-spacing: 0.01em;
 }

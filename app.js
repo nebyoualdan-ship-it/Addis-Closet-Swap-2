@@ -55,6 +55,18 @@ let firebaseApp = null;
 let firestoreDb = null;
 let firebaseStorage = null;
 
+// Initialize Firebase if configured
+if (window.firebaseConfig && isFirebaseConfigured) {
+  try {
+    firebaseApp = initializeApp(window.firebaseConfig);
+    firestoreDb = getFirestore(firebaseApp);
+    firebaseStorage = getStorage(firebaseApp);
+    console.log("Firebase initialized successfully.");
+  } catch (err) {
+    console.warn("Firebase initialization failed, falling back to localStorage:", err);
+  }
+}
+
 // Global application state
 const AppState = {
   currentUser: null,       // Current user details (Telegram info)
@@ -207,20 +219,29 @@ const SEED_SELLERS = [
 // --- 2. UNIFIED DATABASE LAYER (ADAPTER) ---
 const DB = {
   async getItems() {
-    if (isFirebaseConfigured) {
-      const q = collection(firestoreDb, "items");
-      const snap = await getDocs(q);
-      const list = [];
-      snap.forEach(d => list.push(d.data()));
-      return list;
-    } else {
-      let items = localStorage.getItem('addis_items');
-      if (!items) {
-        items = JSON.stringify(SEED_ITEMS);
-        localStorage.setItem('addis_items', items);
+    // Try Firebase first if configured
+    if (isFirebaseConfigured && firestoreDb) {
+      try {
+        const q = collection(firestoreDb, "items");
+        const snap = await getDocs(q);
+        const list = [];
+        snap.forEach(d => list.push(d.data()));
+        // If Firebase has data, use it
+        if (list.length > 0) {
+          return list;
+        }
+      } catch (err) {
+        console.warn("Firebase query failed, falling back to localStorage:", err);
       }
-      return JSON.parse(items);
     }
+    
+    // Fall back to localStorage with seed data
+    let items = localStorage.getItem('addis_items');
+    if (!items) {
+      items = JSON.stringify(SEED_ITEMS);
+      localStorage.setItem('addis_items', items);
+    }
+    return JSON.parse(items);
   },
 
   async saveItem(item) {
